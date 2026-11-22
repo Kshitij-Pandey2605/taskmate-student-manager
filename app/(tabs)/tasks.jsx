@@ -65,9 +65,9 @@ export default function TasksScreen() {
   };
 
   // Toggle completion status
-  const handleToggleStatus = async (id) => {
+  const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await taskService.toggleTaskStatus(id);
+      await taskService.toggleTaskStatus(id, currentStatus);
       fetchTasks();
     } catch (error) {
       console.error('Failed to toggle status:', error);

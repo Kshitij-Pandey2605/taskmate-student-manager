@@ -55,7 +55,7 @@ export default function TaskDetailsScreen() {
     if (!task) return;
     setActionLoading(true);
     try {
-      const updated = await taskService.toggleTaskStatus(task.id);
+      const updated = await taskService.toggleTaskStatus(task.id, task.status);
       setTask(updated);
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to update status');

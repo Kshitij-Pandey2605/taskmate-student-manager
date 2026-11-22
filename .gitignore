@@ -2,6 +2,10 @@
 node_modules/
 backend/node_modules/
 
+# Local MongoDB data
+backend/data/
+data/
+
 # Expo & Metro
 .expo/
 dist/

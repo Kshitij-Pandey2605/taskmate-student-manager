@@ -1,25 +1,39 @@
 // services/api.js
 // Central Axios configuration for TaskMate.
-// In Phase 1, we set up the client structure with clear comments.
-// In Phase 2, this client connects to our Express/MongoDB backend APIs.
+// Automatically detects host IP address for physical Android devices, emulators, and web.
 
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-// For Android emulator, localhost is 10.0.2.2; for iOS simulator / web it is localhost:5000.
-// On physical devices, it will use your computer's local Wi-Fi IP address or deployed backend URL.
-const DEV_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
+// Determine the best API URL dynamically
+const getBaseUrl = () => {
+  // When running via Expo Go on physical device, hostUri provides computer's local Wi-Fi IP
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    return `http://${ip}:5000/api`;
+  }
+
+  // Android Studio Emulator standard loopback
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:5000/api';
+  }
+
+  // Fallback for Web and local development
+  return 'http://localhost:5000/api';
+};
 
 const api = axios.create({
-  baseURL: DEV_API_URL,
+  baseURL: getBaseUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request Interceptor: Automatically attaches the JWT bearer token to every outgoing request
+// Request Interceptor: Automatically attaches the stored JWT token to every outgoing request
 api.interceptors.request.use(
   async (config) => {
     try {
@@ -35,12 +49,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Standardized error logging and handling
+// Response Interceptor: Formats error responses into user-friendly messages
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Collect human-readable error messages from server response
-    const message = error.response?.data?.message || error.message || 'Something went wrong. Please check your network.';
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'Unable to connect to TaskMate server. Please check your network and make sure the backend is running.';
     return Promise.reject(new Error(message));
   }
 );

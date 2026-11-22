@@ -1,10 +1,10 @@
 // context/AuthContext.jsx
 // Global Authentication Context for TaskMate.
-// Manages the student's logged-in status, user profile, and token storage across the entire application.
+// Manages real JWT token persistence, student session verification, login, registration, and logout.
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import authService, { PREVIEW_USER } from '../services/authService';
+import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if student was previously logged in when app opens
+  // Check if student was previously logged in with a valid JWT
   useEffect(() => {
     const loadStoredAuth = async () => {
       try {
@@ -23,13 +23,21 @@ export const AuthProvider = ({ children }) => {
         if (storedToken && storedUser) {
           setUserToken(storedToken);
           setUser(JSON.parse(storedUser));
-        } else {
-          // In Phase 1: Set default preview user so the reviewer can instantly experience the UI
-          // Can be toggled with logout/login buttons
-          setUser(PREVIEW_USER);
-          setUserToken('preview_jwt_token');
-          await AsyncStorage.setItem('userToken', 'preview_jwt_token');
-          await AsyncStorage.setItem('userData', JSON.stringify(PREVIEW_USER));
+
+          // Verify token validity with backend in background
+          try {
+            const profile = await authService.getProfile();
+            if (profile?.user) {
+              setUser(profile.user);
+              await AsyncStorage.setItem('userData', JSON.stringify(profile.user));
+            }
+          } catch (verifyError) {
+            console.warn('Session verification failed, logging out:', verifyError.message);
+            await AsyncStorage.removeItem('userToken');
+            await AsyncStorage.removeItem('userData');
+            setUser(null);
+            setUserToken(null);
+          }
         }
       } catch (error) {
         console.error('Error loading stored auth:', error);
@@ -106,7 +114,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom Hook to consume AuthContext cleanly in any screen
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

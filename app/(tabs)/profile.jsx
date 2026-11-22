@@ -53,22 +53,13 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleResetData = () => {
-    Alert.alert(
-      'Reset Demo Data',
-      'Reset all tasks to the original student sample dataset for testing?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          onPress: () => {
-            taskService.resetPreviewTasks();
-            Alert.alert('Success', 'Sample student tasks have been reset.');
-            router.push('/(tabs)/tasks');
-          },
-        },
-      ]
-    );
+  const handleSyncData = async () => {
+    try {
+      await loadStats();
+      Alert.alert('Synchronized', 'Academic tasks & statistics refreshed from MongoDB database.');
+    } catch (err) {
+      Alert.alert('Sync Error', 'Could not sync tasks with server.');
+    }
   };
 
   return (
@@ -143,14 +134,14 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Quick Demo Action: Reset Tasks */}
-      <TouchableOpacity style={styles.menuItem} onPress={handleResetData} activeOpacity={0.7}>
+      {/* Live Data Action: Sync with Database */}
+      <TouchableOpacity style={styles.menuItem} onPress={handleSyncData} activeOpacity={0.7}>
         <View style={styles.menuIconContainer}>
-          <Ionicons name="refresh-circle-outline" size={22} color={colors.primary} />
+          <Ionicons name="cloud-done-outline" size={22} color={colors.primary} />
         </View>
         <View style={styles.menuTextGroup}>
-          <Text style={styles.menuTitle}>Reset Sample Tasks</Text>
-          <Text style={styles.menuSubtitle}>Restore default demo tasks for viva presentation</Text>
+          <Text style={styles.menuTitle}>Sync with MongoDB</Text>
+          <Text style={styles.menuSubtitle}>Refresh academic tasks & stats from live backend</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </TouchableOpacity>

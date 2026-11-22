@@ -11,53 +11,62 @@ Developed as a college project for practical demonstration and viva examination,
 | Phase | Description | Status |
 | :--- | :--- | :---: |
 | **Phase 1** | **Frontend Foundation & UI Architecture** (React Native, Expo Router, Screens, Navigation, Components, Local State) | **✅ COMPLETED** |
-| **Phase 2** | **Backend, Database & Full API Integration** (Node.js, Express, MongoDB, Mongoose, JWT Auth, bcryptjs, REST APIs) | ⏳ Awaiting Approval |
-| **Phase 3** | **Final Testing, Cloud Deployment & Android APK Build** (EAS Build, APK Generation, Submission Guide, Viva Q&A) | ⏳ Upcoming |
+| **Phase 2** | **Backend, Database & Full API Integration** (Node.js, Express, MongoDB, Mongoose, JWT Auth, bcryptjs, REST APIs) | **✅ COMPLETED** |
+| **Phase 3** | **Final Testing, Cloud Deployment & Android APK Build** (EAS Build, APK Generation, Submission Guide, Viva Q&A) | ⏳ Awaiting Approval |
 
 ---
 
-## 🚀 Phase 1 Overview: Frontend Foundation & UI
+## 🚀 Phase 2 Overview: Backend, Database & Integration
 
-In **Phase 1**, we built the complete client-side architecture and interactive mobile user interface using **React Native**, **Expo**, and **Expo Router** using **pure JavaScript (JSX)**:
+In **Phase 2**, we built the complete backend server and connected the React Native mobile frontend to live REST APIs backed by MongoDB:
 
-- 🎨 **Student-Friendly UI Design**: Clean light theme with rounded cards, subtle shadows, clear typography, and color-coded status/priority badges.
-- 🧭 **File-Based Routing with Expo Router**: Declarative navigation with Stack and Bottom Tabs (`(tabs)`).
-- 🔐 **Authentication Flows**:
-  - `login.jsx`: Email & password validation, toggle visibility, and an **instant one-tap demo autofill** button designed for college viva examiners.
-  - `register.jsx`: Full registration form (Name, College Email, Branch/Department, Password, Confirm Password) with real-time validation.
-- 📊 **Student Dashboard (`(tabs)/index.jsx`)**:
-  - Greeting banner personalized with the student's name and current date.
-  - Semester Productivity progress bar showing completion rate percentage.
-  - 4 interactive statistic cards: **Total Tasks**, **In Progress / Pending**, **Completed**, and **Overdue**.
-  - Upcoming deadlines list with instant completion checkbox toggling.
-  - Quick "+ New Task" shortcut button.
-- 📋 **Task Management Screen (`(tabs)/tasks.jsx`)**:
-  - Search bar filtering tasks by title and description in real-time.
-  - Segmented status tabs (**All**, **Pending**, **Completed**).
-  - Horizontal chip filter by **Category** (*Assignment, Exam, Project, Personal, Other*).
-  - Horizontal chip filter by **Priority** (*High, Medium, Low*).
-  - Due Date sorting toggle (Earliest deadline first vs Latest first).
-  - Floating Action Button (+ New Task).
-  - Deletion confirmation dialog ("Are you sure you want to delete...?").
-- ➕ **Add Task Modal (`tasks/create.jsx`)**:
-  - Full task creation with validation.
-  - Category selector chips with matching brand colors.
-  - Priority selector chips.
-  - Due date picker with 1-tap presets (*Today*, *Tomorrow*, *In 3 Days*, *Next Week*).
-- 🔍 **Task Details Screen (`tasks/[id].jsx`)**:
-  - Complete details view with status banners, overdue warning indicators, description, and created dates.
-  - Action buttons: "Mark as Completed / Pending", "Edit Task", and "Delete".
-- ✏️ **Edit Task Screen (`tasks/edit.jsx`)**:
-  - Pre-populated inputs to update title, description, category, priority, status, and deadline.
-- 👤 **Student Profile Screen (`(tabs)/profile.jsx`)**:
-  - Student avatar, department badge, academic task stats summary, college viva technical stack reference card, demo data reset button, and logout.
+1. **Node.js & Express.js REST API**:
+   - Clean MVC (Model-View-Controller) backend architecture.
+   - Centralized database configuration (`config/db.js`) using Mongoose ODM.
+   - CORS enabled for cross-platform access.
+   - Centralized error-handling middleware (`errorMiddleware.js`) translating Mongoose validation errors, duplicate keys, and invalid ObjectIds into clean HTTP error responses.
+2. **Database Models & Data Validation**:
+   - **User Model (`models/User.js`)**: Name, unique college email, department/branch, and password hashed automatically with `bcryptjs` (10 salt rounds) before saving.
+   - **Task Model (`models/Task.js`)**: Title, description, category enum (*Assignment, Exam, Project, Personal, Other*), priority enum (*Low, Medium, High*), due date (YYYY-MM-DD), status (*Pending, Completed*), and student reference `user` ObjectId.
+3. **JWT Authentication & Security**:
+   - Custom `generateToken.js` utility signing tokens with `process.env.JWT_SECRET` (30-day expiry).
+   - `authMiddleware.js` (`protect`) verifying Bearer tokens and attaching `req.user` to incoming requests.
+   - **Strict Data Isolation**: Students can **only** view, create, edit, or delete their own tasks. Cross-user data modification attempts return `403 Forbidden`.
+4. **End-to-End Frontend Integration**:
+   - Replaced preview mock state with real Axios HTTP calls in `services/taskService.js` and `services/authService.js`.
+   - `services/api.js` automatically detects whether the app is running on Android Studio Emulator (`10.0.2.2`), a local web browser (`localhost`), or a physical Android phone over local Wi-Fi.
+   - Global `AuthContext.jsx` manages persistent login state via `@react-native-async-storage/async-storage` and verifies session tokens against `GET /api/auth/me`.
+   - Real-time Dashboard calculation of Total, Pending, Completed, and Overdue tasks directly from MongoDB documents.
+   - Verified with an automated test suite (`backend/test-api.js`) and database seeder (`backend/seed.js`).
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Architecture
 
 ```text
 taskmate-student-manager/
+├── backend/                       # Node.js + Express + MongoDB Backend
+│   ├── config/
+│   │   └── db.js                  # Mongoose database connection
+│   ├── controllers/
+│   │   ├── authController.js      # Student registration, login & profile
+│   │   └── taskController.js      # Task CRUD operations & ownership checks
+│   ├── middleware/
+│   │   ├── authMiddleware.js      # JWT Bearer token verification
+│   │   └── errorMiddleware.js     # Standardized JSON error handler
+│   ├── models/
+│   │   ├── User.js                # Student schema with bcrypt hashing
+│   │   └── Task.js                # Task schema with user reference
+│   ├── routes/
+│   │   ├── authRoutes.js          # /api/auth endpoints
+│   │   └── taskRoutes.js          # /api/tasks endpoints
+│   ├── utils/
+│   │   └── generateToken.js       # JWT signing utility
+│   ├── .env.example               # Template environment variables
+│   ├── package.json               # Backend dependencies
+│   ├── seed.js                    # Database seeder (creates default demo student & tasks)
+│   ├── server.js                  # Main Express server entry point
+│   └── test-api.js                # Automated backend test suite (9 passing tests)
 ├── app/                           # Expo Router file-based screens
 │   ├── _layout.jsx                # Root layout (SafeAreaProvider, AuthProvider, Stack)
 │   ├── index.jsx                  # Auth gate (redirects to tabs or login)
@@ -65,102 +74,108 @@ taskmate-student-manager/
 │   ├── register.jsx               # Student Registration screen
 │   ├── (tabs)/                    # Bottom Tab Navigator
 │   │   ├── _layout.jsx            # Tab bar configuration & icons
-│   │   ├── index.jsx              # Dashboard screen
+│   │   ├── index.jsx              # Dashboard with real MongoDB statistics
 │   │   ├── tasks.jsx              # All tasks list, search, filters & sort
-│   │   └── profile.jsx            # Student profile, stats, viva card & logout
+│   │   └── profile.jsx            # Student profile, stats & logout
 │   └── tasks/                     # Task sub-routes
 │       ├── create.jsx             # Add task form with deadline shortcuts
-│       ├── [id].jsx               # Task details screen
+│       ├── [id].jsx               # Dynamic task details view
 │       └── edit.jsx               # Edit task form
 ├── components/                    # Reusable UI components
-│   ├── CategoryBadge.jsx          # Academic category chips (Assignment, Exam, etc.)
-│   ├── CustomButton.jsx           # Reusable button with variants, loaders & icons
-│   ├── CustomInput.jsx            # Form input with icons, toggle eye & error labels
-│   ├── EmptyState.jsx             # Friendly empty list illustration and CTA
-│   ├── LoadingScreen.jsx          # Branded loading spinner
-│   ├── PriorityBadge.jsx          # Color-coded priority pill (High, Medium, Low)
-│   ├── StatCard.jsx               # Dashboard summary metrics card
-│   └── TaskCard.jsx               # Interactive task item card with checkbox
 ├── constants/
-│   └── colors.js                  # Central color palette (light theme)
+│   └── colors.js                  # Light-theme design system
 ├── context/
 │   └── AuthContext.jsx            # Global auth state & AsyncStorage token persistence
 ├── services/
-│   ├── api.js                     # Axios HTTP client with JWT interceptors
-│   ├── authService.js             # Authentication API service (mock in Phase 1, Express in Phase 2)
-│   └── taskService.js             # Task CRUD service with sample preview dataset
-├── assets/                        # App icons, splash screens, and adaptive icons
-├── app.json                       # Expo configuration file
-├── babel.config.js                # Babel preset configuration
-├── package.json                   # Project dependencies and npm scripts
-└── README.md                      # Project documentation & viva guide
+│   ├── api.js                     # Axios HTTP client with dynamic IP resolution
+│   ├── authService.js             # Live authentication API calls
+│   └── taskService.js             # Live task CRUD API calls
+├── assets/                        # Icons and splash images
+├── app.json                       # Expo configuration
+├── package.json                   # Mobile app dependencies
+└── README.md                      # Complete project documentation
 ```
 
 ---
 
-## 🛠️ Tech Stack (Phase 1)
+## 📡 REST API Reference
 
-- **Mobile Framework**: React Native
-- **Tooling & Platform**: Expo SDK 58
-- **Navigation**: Expo Router (file-based navigation with stack & bottom tabs)
-- **Language**: JavaScript (JSX only, clean and beginner-friendly)
-- **Styling**: React Native `StyleSheet` (no bloated styling libraries)
-- **State Management**: React Context API (`AuthContext`) + React Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`)
-- **HTTP Client**: Axios (configured in `services/api.js` for seamless Phase 2 backend connection)
-- **Storage**: `@react-native-async-storage/async-storage` for local token caching
+All protected endpoints require the HTTP header:
+`Authorization: Bearer <your_jwt_token>`
+
+### Authentication Endpoints (`/api/auth`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :---: | :--- |
+| `POST` | `/api/auth/register` | Public | Register new student (`name`, `email`, `department`, `password`) |
+| `POST` | `/api/auth/login` | Public | Authenticate student and receive JWT token |
+| `GET` | `/api/auth/me` | Protected | Fetch currently logged-in student profile |
+
+### Task Endpoints (`/api/tasks`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/api/tasks` | Protected | Fetch tasks for authenticated student (supports `?status=`, `?category=`, `?priority=`, `?search=`, `?sort=`) |
+| `POST` | `/api/tasks` | Protected | Create new task (`title`, `description`, `category`, `priority`, `dueDate`) |
+| `GET` | `/api/tasks/:id` | Protected | Fetch single task by ID (validates ownership) |
+| `PUT` | `/api/tasks/:id` | Protected | Update task fields / toggle status (validates ownership) |
+| `DELETE` | `/api/tasks/:id` | Protected | Delete task (validates ownership) |
+
+### Health Endpoint
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :---: | :--- |
+| `GET` | `/api/health` | Public | Returns server health status and timestamp |
 
 ---
 
-## 🏃 How to Run the App Locally
+## 🔄 How Frontend and Backend Communicate
 
-### 1. Prerequisites
-- **Node.js** (v18 or higher recommended)
-- **npm** or **yarn**
-- **Expo Go** app installed on your physical Android phone (from Google Play Store), OR an Android Studio Emulator.
+1. **Authentication Flow**:
+   - The user enters credentials on `app/login.jsx` or `app/register.jsx`.
+   - `authService.js` makes an Axios POST request to `/api/auth/login`.
+   - The backend validates the password using `bcrypt.compare` against the salted hash in MongoDB.
+   - On success, the backend generates a JWT token and sends it back with the user object.
+   - `AuthContext.jsx` saves this token to `AsyncStorage` and updates the React state.
+2. **Protected API Requests**:
+   - The Axios request interceptor in `services/api.js` automatically reads the token from `AsyncStorage` and attaches `Authorization: Bearer <token>` to every outgoing request.
+   - The Express middleware `authMiddleware.js` decodes and verifies the token, finds the student in MongoDB, and attaches `req.user`.
+3. **Data Isolation (Crucial for Viva)**:
+   - When fetching or modifying tasks, the controller queries `{ user: req.user._id }`.
+   - If a student tries to access or delete a task belonging to another user ID, the backend rejects it with `403 Forbidden`.
+4. **Real-Time Dashboard Calculation**:
+   - The Dashboard (`(tabs)/index.jsx`) calls `taskService.getTasks()`.
+   - Total, completed, pending, and overdue counts are calculated directly from the student's live MongoDB documents and displayed across the StatCards and progress bar.
 
-### 2. Start the Development Server
+---
+
+## 🧪 Testing the Backend & Database
+
+### 1. Run Automated Backend API Tests
+In your terminal, run:
 ```bash
-npm start
+node backend/test-api.js
 ```
-or:
+This script automatically executes 9 tests covering:
+- Health check
+- Student registration
+- Student login
+- Profile retrieval (`/api/auth/me`)
+- Task creation
+- Task listing
+- Task updating
+- **Data privacy & security verification** (verifies that User 2 receives 403 Forbidden when trying to access User 1's task)
+- Task deletion
+
+### 2. Seed Default Demo Student Data
+```bash
+node backend/seed.js
+```
+Seeds MongoDB with:
+- **Email**: `alex.student@college.edu`
+- **Password**: `student123`
+- Pre-populated tasks for viva demonstration.
+
+### 3. Run the Mobile App
 ```bash
 npx expo start
 ```
-
-### 3. Open the App on Your Device
-- **Physical Android Phone**: Open the **Expo Go** app on your phone and scan the QR code displayed in your terminal.
-- **Android Emulator**: Press `a` in your terminal to launch the Android emulator.
-- **Web Preview**: Press `w` in your terminal to open in your web browser.
-
----
-
-## 🧪 Manual Testing Instructions for Phase 1
-
-1. **Auth Gate & Splash**:
-   - Launching the app automatically verifies authentication and opens the **Dashboard** (using the preview student account).
-2. **Dashboard Testing**:
-   - Check the **Task Overview** numbers (Total, In Progress, Completed, Overdue).
-   - Check the **Semester Productivity** progress bar.
-   - Tap the checkbox on any upcoming task: notice the task immediately strikes through, and the completed count increases!
-3. **Tasks List & Filtering**:
-   - Switch to the **My Tasks** tab.
-   - Type in the search box (e.g., "Lab" or "Revision") to verify instant search.
-   - Tap the **Pending** or **Completed** tabs to filter tasks.
-   - Tap category chips (*Assignment*, *Exam*, *Project*) or priority chips (*High*, *Medium*, *Low*).
-   - Tap the sort icon to toggle between earliest and latest deadlines.
-4. **Create a New Task**:
-   - Tap the **+** Floating Action Button.
-   - Enter a title (e.g., "Compiler Design Lab Viva").
-   - Select a category and priority.
-   - Tap one of the preset deadline pills (e.g. **Tomorrow** or **In 3 Days**).
-   - Tap **Create Task**; observe the success alert and verify the new task appears in your task list.
-5. **Task Details & Edit**:
-   - Tap any task in the list to open its details view.
-   - Tap **Mark as Completed / Mark as Pending**.
-   - Tap **Edit Task**, modify the title or priority, and tap **Save Changes**.
-   - Tap **Delete**, verify the confirmation prompt, and confirm deletion.
-6. **Profile & Logout**:
-   - Navigate to the **Profile** tab.
-   - View your student details and project technical summary.
-   - Tap **Log Out**; confirm the alert to return to the **Login** screen.
-   - On the Login screen, tap **"Viva Test: Tap to Auto-Fill Student Credentials"** to test quick auto-fill, then tap **Log In**.
+- Tap **"Viva Test: Tap to Auto-Fill Student Credentials"** on the login screen.
+- Tap **Log In** to connect live to MongoDB!

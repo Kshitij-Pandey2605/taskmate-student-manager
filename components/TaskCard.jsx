@@ -80,7 +80,7 @@ const TaskCard = ({
       <View style={styles.mainRow}>
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => onToggleStatus && onToggleStatus(task.id)}
+          onPress={() => onToggleStatus && onToggleStatus(task.id, task.status)}
           style={[styles.checkbox, isCompleted && styles.checkedBox]}
         >
           {isCompleted && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
